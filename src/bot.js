@@ -25,9 +25,10 @@ class AstroBot {
     this.startTime = Date.now();
     this.saveCreds = null;
     this.cachedBuffers = null;
+    this.cachedThumbs = null;
   }
 
-  // Pre-load assets into memory once to ensure 0ms disk I/O and zero server load on KataBump
+  // Pre-load assets and thumbnails into memory once to ensure 0ms disk I/O and bypass native image decoders
   initAssetCache() {
     try {
       this.cachedBuffers = {
@@ -35,7 +36,12 @@ class AstroBot {
         ph: this.getImageBuffer(CONFIG.ASSETS.PH),
         inter: this.getImageBuffer(CONFIG.ASSETS.INTER),
       };
-      this.addLog('info', 'Assets pre-cached in RAM (~960KB) for instant zero-latency responses.');
+      this.cachedThumbs = {
+        pak: this.getThumbBuffer(CONFIG.ASSETS.PAK_THUMB),
+        ph: this.getThumbBuffer(CONFIG.ASSETS.PH_THUMB),
+        inter: this.getThumbBuffer(CONFIG.ASSETS.INTER_THUMB),
+      };
+      this.addLog('info', 'Assets & thumbnails pre-cached in RAM for instant zero-latency responses.');
     } catch (e) {
       this.addLog('warning', `Asset cache note: ${e.message}`);
     }
@@ -63,6 +69,15 @@ class AstroBot {
       return fs.readFileSync(webpPath);
     }
     throw new Error(`Asset not found: ${filePath}`);
+  }
+
+  // Pre-load thumbnail buffer safely (or return minimal JPEG fallback)
+  getThumbBuffer(filePath) {
+    if (filePath && fs.existsSync(filePath)) {
+      return fs.readFileSync(filePath);
+    }
+    // Safe 1x1 minimal JPEG fallback
+    return Buffer.from('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=', 'base64');
   }
 
   async initSocket() {
@@ -167,16 +182,28 @@ class AstroBot {
       // STRICT RULE 2: ONLY WORK ON MY (PAIRED ACCOUNT) COMMAND
       // "only work on paired whstapp number not for everyone only the person who pair number can trigger commands"
       const isFromMe = Boolean(msg.key.fromMe);
-      if (!isFromMe) {
+      const cleanPhone = process.env.PHONE_NUMBER ? process.env.PHONE_NUMBER.replace(/\D/g, '') : null;
+      const isOwnerPhone = cleanPhone && (remoteJid.includes(cleanPhone) || msg.key.participant?.includes(cleanPhone));
+
+      if (!isFromMe && !isOwnerPhone) {
         // Message sent by another person (customer). We do NOT trigger on their messages.
         return;
       }
 
+      // Unpack message wrappers (ephemeral, view-once, document-with-caption)
+      const messageContent =
+        msg.message.ephemeralMessage?.message ||
+        msg.message.viewOnceMessage?.message ||
+        msg.message.viewOnceMessageV2?.message ||
+        msg.message.documentWithCaptionMessage?.message ||
+        msg.message;
+
       // Extract message text
       const rawText =
-        msg.message.conversation ||
-        msg.message.extendedTextMessage?.text ||
-        msg.message.imageMessage?.caption ||
+        messageContent?.conversation ||
+        messageContent?.extendedTextMessage?.text ||
+        messageContent?.imageMessage?.caption ||
+        messageContent?.videoMessage?.caption ||
         '';
 
       const text = rawText.trim();
@@ -208,35 +235,46 @@ class AstroBot {
         return;
       }
 
-      // Execute Commands (0ms Disk I/O - served directly from RAM)
+      // Execute Commands (0ms Disk I/O - served directly from RAM with precomputed thumbnail)
       if (cmd === '.pak') {
         this.addLog('command', `Sending Pak Region list to: ${remoteJid}`);
         const imageBuffer = this.cachedBuffers?.pak || this.getImageBuffer(CONFIG.ASSETS.PAK);
+        const thumbBuffer = this.cachedThumbs?.pak || this.getThumbBuffer(CONFIG.ASSETS.PAK_THUMB);
         await this.sock.sendMessage(remoteJid, {
           image: imageBuffer,
+          jpegThumbnail: thumbBuffer,
         });
+        this.addLog('success', `Pak Region list sent successfully to: ${remoteJid}`);
       } else if (cmd === '.ph') {
         this.addLog('command', `Sending PH Region list to: ${remoteJid}`);
         const imageBuffer = this.cachedBuffers?.ph || this.getImageBuffer(CONFIG.ASSETS.PH);
+        const thumbBuffer = this.cachedThumbs?.ph || this.getThumbBuffer(CONFIG.ASSETS.PH_THUMB);
         await this.sock.sendMessage(remoteJid, {
           image: imageBuffer,
+          jpegThumbnail: thumbBuffer,
         });
+        this.addLog('success', `PH Region list sent successfully to: ${remoteJid}`);
       } else if (cmd === '.inter') {
         this.addLog('command', `Sending International list to: ${remoteJid}`);
         const imageBuffer = this.cachedBuffers?.inter || this.getImageBuffer(CONFIG.ASSETS.INTER);
+        const thumbBuffer = this.cachedThumbs?.inter || this.getThumbBuffer(CONFIG.ASSETS.INTER_THUMB);
         await this.sock.sendMessage(remoteJid, {
           image: imageBuffer,
+          jpegThumbnail: thumbBuffer,
         });
+        this.addLog('success', `International list sent successfully to: ${remoteJid}`);
       } else if (cmd === '.pay') {
         this.addLog('command', `Sending Payment Methods to: ${remoteJid}`);
         await this.sock.sendMessage(remoteJid, {
           text: CONFIG.PAYMENT_INFO,
         });
+        this.addLog('success', `Payment methods sent successfully to: ${remoteJid}`);
       } else if (cmd === '.menu' || cmd === '.help') {
         this.addLog('command', `Sending Menu to: ${remoteJid}`);
         await this.sock.sendMessage(remoteJid, {
           text: CONFIG.MENU_TEXT,
         });
+        this.addLog('success', `Menu sent successfully to: ${remoteJid}`);
       } else if (cmd === '.status') {
         const uptimeHours = ((Date.now() - this.startTime) / (1000 * 60 * 60)).toFixed(1);
         const statusText = `⚡ *ASTRO BOT STATUS* ⚡\n\n` +
@@ -247,6 +285,7 @@ class AstroBot {
           `• Uptime: ${uptimeHours} hours\n` +
           `• Ultra-Lightweight Baileys Engine`;
         await this.sock.sendMessage(remoteJid, { text: statusText });
+        this.addLog('success', `Status sent successfully to: ${remoteJid}`);
       }
     } catch (err) {
       this.addLog('error', `Error executing command: ${err.message}`);
