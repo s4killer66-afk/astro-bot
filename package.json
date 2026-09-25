@@ -8,7 +8,14 @@
     "dev": "node --watch index.js",
     "server": "node server.js"
   },
-  "keywords": ["whatsapp-bot", "baileys", "mlbb", "astro-gaming", "pairing-code", "katabump"],
+  "keywords": [
+    "whatsapp-bot",
+    "baileys",
+    "mlbb",
+    "astro-gaming",
+    "pairing-code",
+    "katabump"
+  ],
   "author": "Astro Gaming",
   "license": "ISC",
   "description": "Astro Bot - Ultra lightweight WhatsApp DM self-bot for MLBB Store with Web Pairing Code",
@@ -18,5 +25,8 @@
     "dotenv": "^18.0.3",
     "express": "^5.2.1",
     "pino": "^10.3.1"
+  },
+  "overrides": {
+    "sharp": "npm:noop2@^2.0.0"
   }
 }
