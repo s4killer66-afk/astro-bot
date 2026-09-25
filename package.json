@@ -1,0 +1,22 @@
+{
+  "name": "astro-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": ["whatsapp-bot", "baileys", "mlbb", "astro-gaming", "pairing-code"],
+  "author": "Astro Gaming",
+  "license": "ISC",
+  "description": "Astro Bot - Ultra lightweight WhatsApp DM self-bot for MLBB Store with Web Pairing Code",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.3",
+    "express": "^5.2.1",
+    "pino": "^10.3.1",
+    "sharp": "^0.35.4"
+  }
+}

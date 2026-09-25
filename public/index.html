@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astro Bot • WhatsApp Self-Assistant Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="background-glow"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo-group">
+      <div class="logo-icon">🚀</div>
+      <div>
+        <h1 class="logo-title">ASTRO BOT</h1>
+        <p class="logo-subtitle">WhatsApp DM Self-Assistant for MLBB Game Store</p>
+      </div>
+    </div>
+
+    <div class="header-status-group">
+      <div id="connBadge" class="status-badge disconnected">
+        <span class="status-dot"></span>
+        <span id="connStatusText">Disconnected</span>
+      </div>
+      <div id="botBadge" class="status-badge bot-active">
+        <span class="status-dot"></span>
+        <span id="botStatusText">Bot: ON</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard-grid">
+    
+    <!-- Left Column: Pairing & Bot Controls -->
+    <section class="card glass-card">
+      <div class="card-header">
+        <div class="icon-wrap">📲</div>
+        <h2>WhatsApp Link & Pairing</h2>
+      </div>
+      <p class="card-desc">Link Astro Bot directly to your WhatsApp without QR scanning. Enter your phone number with country code (e.g. <code>923418109808</code>).</p>
+
+      <!-- Not Connected Form -->
+      <div id="pairFormSection">
+        <div class="input-group">
+          <label for="phoneNumber">WhatsApp Phone Number</label>
+          <div class="input-wrap">
+            <span class="input-prefix">📞</span>
+            <input type="text" id="phoneNumber" placeholder="e.g. 923418109808" value="923418109808">
+          </div>
+        </div>
+
+        <button id="btnGetCode" class="btn btn-primary btn-block">
+          <span>Get 8-Digit Pairing Code</span>
+          <span class="btn-arrow">⚡</span>
+        </button>
+
+        <div id="codeDisplayArea" class="code-box hidden">
+          <p class="code-label">ENTER THIS CODE IN WHATSAPP:</p>
+          <div class="code-row">
+            <span id="pairingCodeValue" class="code-value">---- ----</span>
+            <button id="btnCopyCode" class="btn btn-small btn-secondary">📋 Copy</button>
+          </div>
+          <div class="pairing-steps">
+            <h4>Instructions:</h4>
+            <ol>
+              <li>Open <strong>WhatsApp</strong> on your phone.</li>
+              <li>Tap <strong>Menu (⋮)</strong> or <strong>Settings</strong> &gt; <strong>Linked Devices</strong>.</li>
+              <li>Tap <strong>Link a Device</strong>.</li>
+              <li>Tap <strong>Link with phone number instead</strong> at the bottom.</li>
+              <li>Enter the 8-digit code shown above.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connected State Info -->
+      <div id="connectedSection" class="connected-info hidden">
+        <div class="conn-success-banner">
+          <div class="success-icon">✅</div>
+          <div>
+            <h3>Active & Connected!</h3>
+            <p id="connectedPhoneDisplay">Phone: +923418109808</p>
+          </div>
+        </div>
+
+        <div class="bot-toggle-row">
+          <div>
+            <strong>Astro Bot Status</strong>
+            <p class="text-muted">Controls whether .pak, .ph, .inter, .pay commands are active</p>
+          </div>
+          <button id="btnToggleBot" class="btn btn-secondary">Toggle Bot</button>
+        </div>
+
+        <div class="safe-shield">
+          <span class="shield-icon">🛡️</span>
+          <div>
+            <strong>100% Anti-Ban Protection Active</strong>
+            <p>Runs only in private 1-on-1 DMs. Ignores group chats, broadcasts, and never tags anyone.</p>
+          </div>
+        </div>
+
+        <div class="action-buttons-row">
+          <button id="btnLogout" class="btn btn-danger btn-block">Unpair / Disconnect Session</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Center/Right Column: Interactive Tester & Simulator -->
+    <section class="card glass-card">
+      <div class="card-header">
+        <div class="icon-wrap">🎮</div>
+        <h2>Live Bot Tester & Simulator</h2>
+      </div>
+      <p class="card-desc">Test your bot commands here before replying to customers. See instant preview of banners and payment methods!</p>
+
+      <!-- Quick Command Buttons -->
+      <div class="quick-commands">
+        <span class="quick-label">Click to Test:</span>
+        <button class="pill-btn" onclick="runSimCommand('.pak')">🔴 .pak</button>
+        <button class="pill-btn" onclick="runSimCommand('.ph')">🇵🇭 .ph</button>
+        <button class="pill-btn" onclick="runSimCommand('.inter')">🌐 .inter</button>
+        <button class="pill-btn" onclick="runSimCommand('.pay')">💳 .pay</button>
+        <button class="pill-btn" onclick="runSimCommand('.bot on')">🟢 .bot on</button>
+        <button class="pill-btn" onclick="runSimCommand('.bot off')">🔴 .bot off</button>
+        <button class="pill-btn" onclick="runSimCommand('.menu')">📜 .menu</button>
+      </div>
+
+      <!-- Simulated WhatsApp Chat Box -->
+      <div class="chat-simulator">
+        <div class="chat-header">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-info">
+            <span class="chat-name">Astro Bot (DM Preview)</span>
+            <span class="chat-state">Private Chat Only</span>
+          </div>
+          <button class="btn btn-xs btn-outline" onclick="clearSimChat()">Clear</button>
+        </div>
+
+        <div id="simMessages" class="chat-messages">
+          <div class="msg bot-msg">
+            <div class="msg-bubble">
+              👋 <strong>Astro Bot Simulator Ready!</strong><br>
+              Type or tap any command like <code>.pak</code>, <code>.ph</code>, <code>.inter</code>, or <code>.pay</code> to see the instant reply.
+            </div>
+          </div>
+        </div>
+
+        <form id="simForm" class="chat-input-bar" onsubmit="event.preventDefault(); submitSim();">
+          <input type="text" id="simInput" placeholder="Type .pak, .ph, .inter, .pay..." autocomplete="off">
+          <button type="submit" class="btn btn-send">Send</button>
+        </form>
+      </div>
+
+      <!-- Direct Phone Test Section -->
+      <div class="direct-test-box">
+        <div class="direct-test-header">
+          <span>📲 <strong>Send Real Test to Your WhatsApp Phone</strong></span>
+          <span class="text-muted">(Requires paired device)</span>
+        </div>
+        <div class="direct-test-actions">
+          <button class="btn btn-small btn-secondary" onclick="sendRealTest('.pak')">Test .pak on Phone</button>
+          <button class="btn btn-small btn-secondary" onclick="sendRealTest('.ph')">Test .ph on Phone</button>
+          <button class="btn btn-small btn-secondary" onclick="sendRealTest('.inter')">Test .inter on Phone</button>
+          <button class="btn btn-small btn-secondary" onclick="sendRealTest('.pay')">Test .pay on Phone</button>
+        </div>
+        <p id="directTestFeedback" class="feedback-text"></p>
+      </div>
+    </section>
+
+    <!-- Full Width: Image Catalog & Payment Method Details -->
+    <section class="card glass-card full-span">
+      <div class="card-header">
+        <div class="icon-wrap">🖼️</div>
+        <h2>Store Catalog & Trigger Keywords</h2>
+      </div>
+
+      <div class="catalog-grid">
+        <!-- PAK REGION -->
+        <div class="catalog-card">
+          <div class="catalog-tag red-tag">Trigger: .pak</div>
+          <div class="catalog-img-wrap">
+            <img src="/assets/pak.jpg" alt="MLBB Pak Region Price List" class="catalog-img">
+          </div>
+          <div class="catalog-meta">
+            <h3>🇵🇰 Pak Region Price List</h3>
+            <p>Red Theme • 280, 575, 799, 3365 Diamonds, Double Diamond & Passes</p>
+          </div>
+        </div>
+
+        <!-- PH REGION -->
+        <div class="catalog-card">
+          <div class="catalog-tag purple-tag">Trigger: .ph</div>
+          <div class="catalog-img-wrap">
+            <img src="/assets/ph.jpg" alt="MLBB PH Region Price List" class="catalog-img">
+          </div>
+          <div class="catalog-meta">
+            <h3>🇵🇭 Philippines Region Price List</h3>
+            <p>Purple Theme • 56 to 6042 Diamonds, Weekly Pass & Twilight Pass</p>
+          </div>
+        </div>
+
+        <!-- INTERNATIONAL -->
+        <div class="catalog-card">
+          <div class="catalog-tag blue-tag">Trigger: .inter</div>
+          <div class="catalog-img-wrap">
+            <img src="/assets/inter.jpg" alt="MLBB International Diamonds Price List" class="catalog-img">
+          </div>
+          <div class="catalog-meta">
+            <h3>🌐 International Diamonds Price List</h3>
+            <p>Blue Theme • 55 to 9288 Diamonds, Passes & QR Code</p>
+          </div>
+        </div>
+
+        <!-- PAYMENT METHODS -->
+        <div class="catalog-card payment-card">
+          <div class="catalog-tag gold-tag">Trigger: .pay</div>
+          <div class="payment-preview-content">
+            <h4>💳 ASTRO PAYMENT METHODS</h4>
+            <div class="pay-item">
+              <span class="pay-dot green">🟢</span>
+              <div>
+                <strong>Easypaisa:</strong> <code>03418109808</code><br>
+                <small>Syed Nabeel Azhar</small>
+              </div>
+            </div>
+            <div class="pay-item">
+              <span class="pay-dot orange">🟠</span>
+              <div>
+                <strong>Jazzcash:</strong> <code>03345655395</code><br>
+                <small>Nabeel Azhar</small>
+              </div>
+            </div>
+            <div class="pay-item">
+              <span class="pay-dot yellow">🏪</span>
+              <div>
+                <strong>Merchant Till ID:</strong> <code>999213495</code><br>
+                <small>Astro Gaming Store</small>
+              </div>
+            </div>
+            <div class="pay-item">
+              <span class="pay-dot yellow">🟡</span>
+              <div>
+                <strong>Binance Pay / NayaPay:</strong> <code>+92 341 8109808</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Real-time Activity Logs -->
+    <section class="card glass-card full-span">
+      <div class="card-header">
+        <div class="icon-wrap">📋</div>
+        <h2>Real-Time Activity Logs</h2>
+      </div>
+      <div id="logsTerminal" class="logs-terminal">
+        <div class="log-row log-info">[SYSTEM] Astro Bot dashboard initialized and listening...</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Astro Bot • High Performance WhatsApp Self-Assistant • Developed for Astro Gaming</p>
+  </footer>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
