@@ -111,6 +111,26 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
     botInstance.initSocket().catch((err) => {
       console.error('Auto-reconnect error:', err.message);
     });
+  } else if (process.env.PHONE_NUMBER) {
+    // If PHONE_NUMBER is set in environment, automatically output pairing code in console!
+    const autoPhone = process.env.PHONE_NUMBER;
+    setTimeout(async () => {
+      try {
+        console.log(`⏳ Auto-pairing requested for +${autoPhone}...`);
+        const code = await botInstance.requestPairingCode(autoPhone);
+        console.log(`\n╔═══════════════════════════════════════════════════════════════╗`);
+        console.log(`║ 📲 ASTRO BOT WHATSAPP PAIRING CODE:                           ║`);
+        console.log(`║ 👉  ${code}  👈                                      ║`);
+        console.log(`║                                                               ║`);
+        console.log(`║ Instructions:                                                 ║`);
+        console.log(`║ 1. Open WhatsApp on phone                                     ║`);
+        console.log(`║ 2. Tap Linked Devices > Link with phone number instead        ║`);
+        console.log(`║ 3. Enter code: ${code}                                       ║`);
+        console.log(`╚═══════════════════════════════════════════════════════════════╝\n`);
+      } catch (err) {
+        console.log(`[Auto-Pair Info] ${err.message}`);
+      }
+    }, 3000);
   }
 });
 
