@@ -1,2 +1,2 @@
-// HyeHost / cPanel Phusion Passenger entrypoint
+// Universal application entrypoint
 import './server.js';

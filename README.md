@@ -14,7 +14,7 @@ An ultra-lightweight, high-performance WhatsApp self-assistant bot tailored for 
   - Sends straight images without mentioning (`@`) anyone.
 - 📲 **8-Digit Pairing Code Webpage**: Pair your WhatsApp number effortlessly in seconds without scanning QR codes.
 - 🧪 **Interactive Web Simulator & Tester**: Test every command (`.pak`, `.ph`, `.inter`, `.pay`) in an authentic WhatsApp simulator right inside your browser before going live, plus a one-click test message to your own phone!
-- ⚡ **Ultra-Lightweight & Fast**: Pure Node.js & WebSocket engine (~40MB RAM), no Chromium or Puppeteer. Perfect for free hosting like **HyeHost**, Render, Railway, or VPS.
+- ⚡ **Ultra-Lightweight & Fast**: Pure Node.js & WebSocket engine (~40MB RAM), no Chromium or Puppeteer. Perfectly optimized for **KataBump** free tier (308MB RAM).
 
 ---
 
@@ -83,32 +83,25 @@ The server will start at `http://localhost:3000`.
 
 ---
 
-## 🌐 Free Hosting on HyeHost (cPanel Node.js)
+## 🌐 Free Hosting on KataBump
 
-Astro Bot is designed to run seamlessly on **HyeHost** free cPanel hosting:
+Astro Bot is configured to run on **KataBump** free container hosting:
 
-1. **Log in to HyeHost cPanel**.
-2. Scroll to the **Software** section and click **"Setup Node.js App"**.
-3. Click **"Create Application"**:
-   - **Node.js version**: Choose `20.x` or `18.x`.
-   - **Application mode**: `Production`.
-   - **Application root**: `astro-bot` (or your folder name).
-   - **Application URL**: Select your domain/subdomain.
-   - **Application startup file**: `server.js`.
-4. Click **Create**.
-5. Upload your files into the application directory using **cPanel File Manager** or Git:
-   - Upload `package.json`, `server.js`, `src/`, `assets/`, `public/`.
-   - *(Note: Do NOT upload `node_modules` or `session` folder).*
-6. In the Node.js App settings, click **"Run NPM Install"** (Takes < 10 seconds because heavy native dependencies like Sharp are eliminated).
-7. Click **"Restart"** / **"Start"**.
-8. Visit your website URL, enter your phone number, get the pairing code, and link your WhatsApp!
+1. **Log in to KataBump Dashboard** (`control.katabump.com`).
+2. Go to the **Files** tab:
+   - Upload `astro-bot-katabump.zip` and click **"Unarchive"** (or in Console: `git clone https://github.com/s4killer66-afk/astro-bot.git .`).
+3. Go to the **Startup** tab:
+   - Startup file: `index.js` (or `server.js`).
+   - Node.js version: `20` (or `24`).
+4. Click **Start** in the **Console** tab!
+5. Open your server URL or port to access the Pairing Dashboard.
 
-> 💡 **HyeHost Free Tier Optimizations Built-In**:
-> - **Zero Native Build Errors**: Pre-converted JPEG/WebP assets eliminate heavy C++ packages like `sharp` from `package.json`.
-> - **In-Memory RAM Cache (~960KB)**: All images reside in memory on boot, resulting in **0ms disk reads** and zero I/O throttling from CloudLinux.
-> - **Socket-Level Group Filter**: All group messages (`@g.us`) and broadcast channels are rejected at the network layer before decryption (`shouldIgnoreJid`), saving up to 80% CPU and RAM.
-> - **Memory Cap**: Configured to run with `--max-old-space-size=256` to prevent exceeding free hosting RAM quotas.
-> - **Auto-Reconnect**: The session is stored in `session/`. When HyeHost restarts or recycles the app pool, Astro Bot automatically reconnects without re-pairing!
+> 💡 **KataBump Optimizations Built-In**:
+> - **RAM Usage < 80MB**: Easily fits inside KataBump's 308MB free limit.
+> - **In-Memory RAM Cache (~960KB)**: All images reside in memory on boot, resulting in **0ms disk reads** and instant WhatsApp dispatch.
+> - **Socket-Level Group Filter**: All group messages (`@g.us`) and broadcast channels are rejected at the network layer before decryption (`shouldIgnoreJid`), saving up to 80% CPU and memory.
+> - **Memory Cap**: Configured with `--max-old-space-size=256` to prevent exceeding container memory quotas.
+> - **Auto-Reconnect**: The session is stored in `session/`. When the container restarts, Astro Bot automatically reconnects without re-pairing!
 
 ---
 

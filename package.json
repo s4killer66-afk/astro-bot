@@ -4,11 +4,10 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node --max-old-space-size=256 server.js",
-    "dev": "node --watch server.js",
-    "hyehost": "node server.js"
+    "start": "node --max-old-space-size=256 index.js",
+    "dev": "node --watch index.js"
   },
-  "keywords": ["whatsapp-bot", "baileys", "mlbb", "astro-gaming", "pairing-code", "hyehost"],
+  "keywords": ["whatsapp-bot", "baileys", "mlbb", "astro-gaming", "pairing-code", "katabump"],
   "author": "Astro Gaming",
   "license": "ISC",
   "description": "Astro Bot - Ultra lightweight WhatsApp DM self-bot for MLBB Store with Web Pairing Code",

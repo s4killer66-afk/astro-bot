@@ -97,7 +97,7 @@ app.post('/api/logout', async (req, res) => {
   }
 });
 
-// Start Express Server (bind to 0.0.0.0 for Docker / HyeHost)
+// Start Express Server (bind to 0.0.0.0 for container networking)
 const server = app.listen(PORT, '0.0.0.0', async () => {
   console.log(`\n======================================================`);
   console.log(`🚀 ${CONFIG.BOT_NAME} Server running at: http://localhost:${PORT}`);

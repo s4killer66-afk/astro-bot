@@ -27,7 +27,7 @@ class AstroBot {
     this.cachedBuffers = null;
   }
 
-  // Pre-load assets into memory once to ensure 0ms disk I/O and zero server load on HyeHost
+  // Pre-load assets into memory once to ensure 0ms disk I/O and zero server load on KataBump
   initAssetCache() {
     try {
       this.cachedBuffers = {
@@ -48,7 +48,7 @@ class AstroBot {
       message,
     };
     this.logs.unshift(logEntry);
-    if (this.logs.length > 50) this.logs.pop(); // Keep low memory footprint for HyeHost
+    if (this.logs.length > 50) this.logs.pop(); // Keep low memory footprint for KataBump
     console.log(`[${logEntry.timestamp}] [${type.toUpperCase()}] ${message}`);
   }
 
@@ -91,7 +91,7 @@ class AstroBot {
         printQRInTerminal: false,
         browser: Browsers.ubuntu('Chrome'), // Safe official standard browser signature
         syncFullHistory: false,
-        markOnlineOnConnect: false, // Save bandwidth & CPU on HyeHost
+        markOnlineOnConnect: false, // Save bandwidth & CPU on KataBump
         generateHighQualityLinkPreview: false, // Save CPU
         // Ignore all groups and broadcasts at network level to save ~80% CPU & RAM
         shouldIgnoreJid: (jid) =>
