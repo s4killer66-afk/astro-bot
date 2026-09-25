@@ -4,6 +4,7 @@ import makeWASocket, {
   Browsers,
   delay,
   makeCacheableSignalKeyStore,
+  jidNormalizedUser,
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import fs from 'fs';
@@ -179,13 +180,15 @@ class AstroBot {
         return;
       }
 
-      // STRICT RULE 2: ONLY WORK ON MY (PAIRED ACCOUNT) COMMAND
-      // "only work on paired whstapp number not for everyone only the person who pair number can trigger commands"
+      // STRICT RULE 2: ONLY WORK ON PAIRED ACCOUNT COMMAND OR OWNER PHONE
       const isFromMe = Boolean(msg.key.fromMe);
-      const cleanPhone = process.env.PHONE_NUMBER ? process.env.PHONE_NUMBER.replace(/\D/g, '') : null;
-      const isOwnerPhone = cleanPhone && (remoteJid.includes(cleanPhone) || msg.key.participant?.includes(cleanPhone));
+      const cleanEnvPhone = process.env.PHONE_NUMBER ? process.env.PHONE_NUMBER.replace(/\D/g, '') : null;
+      const connectedUserPhone = this.sock.user?.id ? jidNormalizedUser(this.sock.user.id).replace(/\D/g, '') : null;
 
-      if (!isFromMe && !isOwnerPhone) {
+      const isFromConnectedAccount = isFromMe || (connectedUserPhone && remoteJid.includes(connectedUserPhone));
+      const isFromEnvOwner = cleanEnvPhone && (remoteJid.includes(cleanEnvPhone) || msg.key.participant?.includes(cleanEnvPhone));
+
+      if (!isFromConnectedAccount && !isFromEnvOwner) {
         // Message sent by another person (customer). We do NOT trigger on their messages.
         return;
       }
@@ -211,11 +214,44 @@ class AstroBot {
 
       const cmd = text.toLowerCase().trim();
 
+      // Resolve the true routable destination JID:
+      // When messaging yourself (Note to self), WhatsApp gives an unroutable @lid (e.g. 2303... @lid).
+      // We map it to the actual phone JID (@s.whatsapp.net) so WhatsApp delivers it!
+      let targetJid = remoteJid;
+      if (remoteJid.endsWith('@lid')) {
+        try {
+          const mappedPn = await this.sock.signalRepository?.lidMapping?.getPNForLID(remoteJid);
+          if (mappedPn) {
+            targetJid = mappedPn;
+          } else if (this.sock.user?.id) {
+            targetJid = jidNormalizedUser(this.sock.user.id);
+          }
+        } catch (e) {
+          if (this.sock.user?.id) {
+            targetJid = jidNormalizedUser(this.sock.user.id);
+          }
+        }
+      }
+
+      // Safe delivery helper: sends to targetJid and also attempts remoteJid if different
+      const sendReply = async (content) => {
+        try {
+          await this.sock.sendMessage(targetJid, content);
+        } catch (e) {
+          this.addLog('warning', `Failed sending to target ${targetJid}: ${e.message}`);
+        }
+        if (targetJid !== remoteJid) {
+          try {
+            await this.sock.sendMessage(remoteJid, content);
+          } catch (e) {}
+        }
+      };
+
       // Bot ON / OFF Toggle Commands
       if (cmd === '.bot off') {
         this.botActive = false;
-        this.addLog('command', `Owner toggled bot OFF in chat: ${remoteJid}`);
-        await this.sock.sendMessage(remoteJid, {
+        this.addLog('command', `Owner toggled bot OFF in chat: ${targetJid}`);
+        await sendReply({
           text: '🔴 *Astro Bot is now OFF.*\nCommands (.pak, .ph, .inter, .pay) are paused.\nType *.bot on* anytime to reactivate.',
         });
         return;
@@ -223,8 +259,8 @@ class AstroBot {
 
       if (cmd === '.bot on') {
         this.botActive = true;
-        this.addLog('command', `Owner toggled bot ON in chat: ${remoteJid}`);
-        await this.sock.sendMessage(remoteJid, {
+        this.addLog('command', `Owner toggled bot ON in chat: ${targetJid}`);
+        await sendReply({
           text: '🟢 *Astro Bot is now ON.*\nReady to send price lists & payment details instantly on your command.',
         });
         return;
@@ -237,55 +273,55 @@ class AstroBot {
 
       // Execute Commands (0ms Disk I/O - served directly from RAM with precomputed thumbnail)
       if (cmd === '.pak') {
-        this.addLog('command', `Sending Pak Region list to: ${remoteJid}`);
+        this.addLog('command', `Sending Pak Region list to: ${targetJid}`);
         const imageBuffer = this.cachedBuffers?.pak || this.getImageBuffer(CONFIG.ASSETS.PAK);
         const thumbBuffer = this.cachedThumbs?.pak || this.getThumbBuffer(CONFIG.ASSETS.PAK_THUMB);
-        await this.sock.sendMessage(remoteJid, {
+        await sendReply({
           image: imageBuffer,
           jpegThumbnail: thumbBuffer,
         });
-        this.addLog('success', `Pak Region list sent successfully to: ${remoteJid}`);
+        this.addLog('success', `Pak Region list sent successfully to: ${targetJid}`);
       } else if (cmd === '.ph') {
-        this.addLog('command', `Sending PH Region list to: ${remoteJid}`);
+        this.addLog('command', `Sending PH Region list to: ${targetJid}`);
         const imageBuffer = this.cachedBuffers?.ph || this.getImageBuffer(CONFIG.ASSETS.PH);
         const thumbBuffer = this.cachedThumbs?.ph || this.getThumbBuffer(CONFIG.ASSETS.PH_THUMB);
-        await this.sock.sendMessage(remoteJid, {
+        await sendReply({
           image: imageBuffer,
           jpegThumbnail: thumbBuffer,
         });
-        this.addLog('success', `PH Region list sent successfully to: ${remoteJid}`);
+        this.addLog('success', `PH Region list sent successfully to: ${targetJid}`);
       } else if (cmd === '.inter') {
-        this.addLog('command', `Sending International list to: ${remoteJid}`);
+        this.addLog('command', `Sending International list to: ${targetJid}`);
         const imageBuffer = this.cachedBuffers?.inter || this.getImageBuffer(CONFIG.ASSETS.INTER);
         const thumbBuffer = this.cachedThumbs?.inter || this.getThumbBuffer(CONFIG.ASSETS.INTER_THUMB);
-        await this.sock.sendMessage(remoteJid, {
+        await sendReply({
           image: imageBuffer,
           jpegThumbnail: thumbBuffer,
         });
-        this.addLog('success', `International list sent successfully to: ${remoteJid}`);
+        this.addLog('success', `International list sent successfully to: ${targetJid}`);
       } else if (cmd === '.pay') {
-        this.addLog('command', `Sending Payment Methods to: ${remoteJid}`);
-        await this.sock.sendMessage(remoteJid, {
+        this.addLog('command', `Sending Payment Methods to: ${targetJid}`);
+        await sendReply({
           text: CONFIG.PAYMENT_INFO,
         });
-        this.addLog('success', `Payment methods sent successfully to: ${remoteJid}`);
+        this.addLog('success', `Payment methods sent successfully to: ${targetJid}`);
       } else if (cmd === '.menu' || cmd === '.help') {
-        this.addLog('command', `Sending Menu to: ${remoteJid}`);
-        await this.sock.sendMessage(remoteJid, {
+        this.addLog('command', `Sending Menu to: ${targetJid}`);
+        await sendReply({
           text: CONFIG.MENU_TEXT,
         });
-        this.addLog('success', `Menu sent successfully to: ${remoteJid}`);
+        this.addLog('success', `Menu sent successfully to: ${targetJid}`);
       } else if (cmd === '.status') {
         const uptimeHours = ((Date.now() - this.startTime) / (1000 * 60 * 60)).toFixed(1);
         const statusText = `⚡ *ASTRO BOT STATUS* ⚡\n\n` +
           `• State: ${this.botActive ? '🟢 Active' : '🔴 Inactive (Off)'}\n` +
           `• Target: Private DMs Only 🔒\n` +
-          `• Account: +${this.user?.id ? this.user.id.split(':')[0] : 'Not Connected'}\n` +
+          `• Connected Account: +${this.user?.id ? this.user.id.split(':')[0] : 'Not Connected'}\n` +
           `• Anti-Ban Protection: Active 🛡️\n` +
           `• Uptime: ${uptimeHours} hours\n` +
-          `• Ultra-Lightweight Baileys Engine`;
-        await this.sock.sendMessage(remoteJid, { text: statusText });
-        this.addLog('success', `Status sent successfully to: ${remoteJid}`);
+          `• Engine: Ultra-Lightweight (0ms RAM Cache)`;
+        await sendReply({ text: statusText });
+        this.addLog('success', `Status sent successfully to: ${targetJid}`);
       }
     } catch (err) {
       this.addLog('error', `Error executing command: ${err.message}`);
