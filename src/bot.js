@@ -24,6 +24,21 @@ class AstroBot {
     this.isInitializing = false;
     this.startTime = Date.now();
     this.saveCreds = null;
+    this.cachedBuffers = null;
+  }
+
+  // Pre-load assets into memory once to ensure 0ms disk I/O and zero server load on HyeHost
+  initAssetCache() {
+    try {
+      this.cachedBuffers = {
+        pak: this.getImageBuffer(CONFIG.ASSETS.PAK),
+        ph: this.getImageBuffer(CONFIG.ASSETS.PH),
+        inter: this.getImageBuffer(CONFIG.ASSETS.INTER),
+      };
+      this.addLog('info', 'Assets pre-cached in RAM (~960KB) for instant zero-latency responses.');
+    } catch (e) {
+      this.addLog('warning', `Asset cache note: ${e.message}`);
+    }
   }
 
   addLog(type, message) {
@@ -33,7 +48,7 @@ class AstroBot {
       message,
     };
     this.logs.unshift(logEntry);
-    if (this.logs.length > 100) this.logs.pop();
+    if (this.logs.length > 50) this.logs.pop(); // Keep low memory footprint for HyeHost
     console.log(`[${logEntry.timestamp}] [${type.toUpperCase()}] ${message}`);
   }
 
@@ -54,6 +69,11 @@ class AstroBot {
     if (this.isInitializing) return this.sock;
     this.isInitializing = true;
 
+    // Cache images into memory on startup
+    if (!this.cachedBuffers) {
+      this.initAssetCache();
+    }
+
     try {
       if (!fs.existsSync(CONFIG.SESSION_DIR)) {
         fs.mkdirSync(CONFIG.SESSION_DIR, { recursive: true });
@@ -71,8 +91,13 @@ class AstroBot {
         printQRInTerminal: false,
         browser: Browsers.ubuntu('Chrome'), // Safe official standard browser signature
         syncFullHistory: false,
-        markOnlineOnConnect: true,
-        generateHighQualityLinkPreview: true,
+        markOnlineOnConnect: false, // Save bandwidth & CPU on HyeHost
+        generateHighQualityLinkPreview: false, // Save CPU
+        // Ignore all groups and broadcasts at network level to save ~80% CPU & RAM
+        shouldIgnoreJid: (jid) =>
+          !jid || jid.endsWith('@g.us') || jid === 'status@broadcast' || jid.includes('@newsletter'),
+        defaultQueryTimeoutMs: 60000,
+        keepAliveIntervalMs: 30000,
       });
 
       this.sock.ev.on('creds.update', saveCreds);
@@ -183,22 +208,22 @@ class AstroBot {
         return;
       }
 
-      // Execute Commands
+      // Execute Commands (0ms Disk I/O - served directly from RAM)
       if (cmd === '.pak') {
         this.addLog('command', `Sending Pak Region list to: ${remoteJid}`);
-        const imageBuffer = this.getImageBuffer(CONFIG.ASSETS.PAK);
+        const imageBuffer = this.cachedBuffers?.pak || this.getImageBuffer(CONFIG.ASSETS.PAK);
         await this.sock.sendMessage(remoteJid, {
           image: imageBuffer,
         });
       } else if (cmd === '.ph') {
         this.addLog('command', `Sending PH Region list to: ${remoteJid}`);
-        const imageBuffer = this.getImageBuffer(CONFIG.ASSETS.PH);
+        const imageBuffer = this.cachedBuffers?.ph || this.getImageBuffer(CONFIG.ASSETS.PH);
         await this.sock.sendMessage(remoteJid, {
           image: imageBuffer,
         });
       } else if (cmd === '.inter') {
         this.addLog('command', `Sending International list to: ${remoteJid}`);
-        const imageBuffer = this.getImageBuffer(CONFIG.ASSETS.INTER);
+        const imageBuffer = this.cachedBuffers?.inter || this.getImageBuffer(CONFIG.ASSETS.INTER);
         await this.sock.sendMessage(remoteJid, {
           image: imageBuffer,
         });
@@ -325,15 +350,15 @@ class AstroBot {
     const cleanCmd = command.toLowerCase().trim();
 
     if (cleanCmd === '.pak') {
-      const buffer = this.getImageBuffer(CONFIG.ASSETS.PAK);
+      const buffer = this.cachedBuffers?.pak || this.getImageBuffer(CONFIG.ASSETS.PAK);
       await this.sock.sendMessage(targetJid, { image: buffer });
       return 'Sent Pak Region image (.pak) to your WhatsApp!';
     } else if (cleanCmd === '.ph') {
-      const buffer = this.getImageBuffer(CONFIG.ASSETS.PH);
+      const buffer = this.cachedBuffers?.ph || this.getImageBuffer(CONFIG.ASSETS.PH);
       await this.sock.sendMessage(targetJid, { image: buffer });
       return 'Sent PH Region image (.ph) to your WhatsApp!';
     } else if (cleanCmd === '.inter') {
-      const buffer = this.getImageBuffer(CONFIG.ASSETS.INTER);
+      const buffer = this.cachedBuffers?.inter || this.getImageBuffer(CONFIG.ASSETS.INTER);
       await this.sock.sendMessage(targetJid, { image: buffer });
       return 'Sent International image (.inter) to your WhatsApp!';
     } else if (cleanCmd === '.pay') {

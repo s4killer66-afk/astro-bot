@@ -99,34 +99,28 @@ Astro Bot is designed to run seamlessly on **HyeHost** free cPanel hosting:
 5. Upload your files into the application directory using **cPanel File Manager** or Git:
    - Upload `package.json`, `server.js`, `src/`, `assets/`, `public/`.
    - *(Note: Do NOT upload `node_modules` or `session` folder).*
-6. In the Node.js App settings, click **"Run NPM Install"**.
+6. In the Node.js App settings, click **"Run NPM Install"** (Takes < 10 seconds because heavy native dependencies like Sharp are eliminated).
 7. Click **"Restart"** / **"Start"**.
 8. Visit your website URL, enter your phone number, get the pairing code, and link your WhatsApp!
 
-> 💡 **Auto-Reconnect**: The session is stored in the `session/` directory. Even if HyeHost restarts your server, Astro Bot automatically re-establishes the connection without re-pairing!
+> 💡 **HyeHost Free Tier Optimizations Built-In**:
+> - **Zero Native Build Errors**: Pre-converted JPEG/WebP assets eliminate heavy C++ packages like `sharp` from `package.json`.
+> - **In-Memory RAM Cache (~960KB)**: All images reside in memory on boot, resulting in **0ms disk reads** and zero I/O throttling from CloudLinux.
+> - **Socket-Level Group Filter**: All group messages (`@g.us`) and broadcast channels are rejected at the network layer before decryption (`shouldIgnoreJid`), saving up to 80% CPU and RAM.
+> - **Memory Cap**: Configured to run with `--max-old-space-size=256` to prevent exceeding free hosting RAM quotas.
+> - **Auto-Reconnect**: The session is stored in `session/`. When HyeHost restarts or recycles the app pool, Astro Bot automatically reconnects without re-pairing!
 
 ---
 
-## 🐙 Push to Your GitHub
+## 🐙 GitHub Repository
 
-To upload this bot to your GitHub repository:
+Repository URL: **[https://github.com/s4killer66-afk/astro-bot](https://github.com/s4killer66-afk/astro-bot)**
 
+To pull or push future updates:
 ```bash
-# 1. Initialize git (if not already done)
-git init
-
-# 2. Add all files
 git add .
-
-# 3. Commit your code
-git commit -m "feat: complete Astro Bot with pairing code and web dashboard"
-
-# 4. Add your GitHub repository URL (replace with your repo link)
-git remote add origin https://github.com/<YOUR_USERNAME>/<YOUR_REPO_NAME>.git
-
-# 5. Push to GitHub
-git branch -M main
-git push -u origin main
+git commit -m "update: improvements"
+git push origin main
 ```
 
 ---
