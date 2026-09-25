@@ -97,8 +97,8 @@ app.post('/api/logout', async (req, res) => {
   }
 });
 
-// Start Express Server
-const server = app.listen(PORT, async () => {
+// Start Express Server (bind to 0.0.0.0 for Docker / HyeHost)
+const server = app.listen(PORT, '0.0.0.0', async () => {
   console.log(`\n======================================================`);
   console.log(`🚀 ${CONFIG.BOT_NAME} Server running at: http://localhost:${PORT}`);
   console.log(`📡 Open this URL in your browser to pair your WhatsApp`);
