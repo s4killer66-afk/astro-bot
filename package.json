@@ -2,10 +2,11 @@
   "name": "astro-bot",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "start": "node --max-old-space-size=256 index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "server": "node server.js"
   },
   "keywords": ["whatsapp-bot", "baileys", "mlbb", "astro-gaming", "pairing-code", "katabump"],
   "author": "Astro Gaming",

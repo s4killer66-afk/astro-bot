@@ -83,25 +83,36 @@ The server will start at `http://localhost:3000`.
 
 ---
 
-## 🌐 Free Hosting on KataBump
+## 🌐 Free Hosting on HyeHost (Free Bot Plan)
 
-Astro Bot is configured to run on **KataBump** free container hosting:
+Astro Bot is configured to run on **HyeHost Free Bot Hosting**:
 
-1. **Log in to KataBump Dashboard** (`control.katabump.com`).
-2. Go to the **Files** tab:
-   - Upload `astro-bot-katabump.zip` and click **"Unarchive"** (or in Console: `git clone https://github.com/s4killer66-afk/astro-bot.git .`).
-3. Go to the **Startup** tab:
-   - Startup file: `index.js` (or `server.js`).
-   - Node.js version: `20` (or `24`).
-4. Click **Start** in the **Console** tab!
-5. Open your server URL or port to access the Pairing Dashboard.
+### Step 1: Deploy to HyeHost
+- **Option A (GitHub)**: In your HyeHost Bot Dashboard, connect your GitHub repository:
+  `https://github.com/s4killer66-afk/astro-bot` (Branch: `main`).
+- **Option B (File Manager Upload)**: Upload `astro-bot-hyehost.zip` directly into your HyeHost file manager and click **Unarchive**.
 
-> 💡 **KataBump Optimizations Built-In**:
-> - **RAM Usage < 80MB**: Easily fits inside KataBump's 308MB free limit.
-> - **In-Memory RAM Cache (~960KB)**: All images reside in memory on boot, resulting in **0ms disk reads** and instant WhatsApp dispatch.
+### Step 2: How to Pair on HyeHost
+You have two flexible pairing methods:
+
+#### Method A: Direct Console Pairing (Easiest — No Web Link Needed)
+1. In HyeHost, go to **Environment Variables** (or edit `.env`).
+2. Add your phone number:
+   `PHONE_NUMBER=923418109808`
+3. Click **Start / Restart**.
+4. Within 5 seconds, the bot prints the 8-digit WhatsApp code directly on your HyeHost Console screen!
+5. Enter the code in WhatsApp under **Linked Devices** > **Link with phone number instead**.
+
+#### Method B: Web Dashboard (If Port/URL Allocated)
+1. Open your HyeHost provided domain or IP:PORT.
+2. Enter your phone number on the webpage and click **"Get 8-Digit Pairing Code"**.
+
+> 💡 **HyeHost Free Tier Performance Optimizations**:
+> - **Zero `npm ci` Errors**: Clean, 100% synchronized `package-lock.json` with no heavy native C++ binaries (no sharp).
+> - **Ultra-Low Memory Footprint (< 80MB)**: Uses Node memory cap (`--max-old-space-size=256`), running smoothly on free bot quotas.
+> - **In-Memory RAM Cache (~960KB)**: All price list images reside in RAM for **0ms disk read delay** and instant WhatsApp dispatch.
 > - **Socket-Level Group Filter**: All group messages (`@g.us`) and broadcast channels are rejected at the network layer before decryption (`shouldIgnoreJid`), saving up to 80% CPU and memory.
-> - **Memory Cap**: Configured with `--max-old-space-size=256` to prevent exceeding container memory quotas.
-> - **Auto-Reconnect**: The session is stored in `session/`. When the container restarts, Astro Bot automatically reconnects without re-pairing!
+> - **Auto-Reconnect**: Session credentials save to `session/`. When HyeHost restarts or sleeps, Astro Bot re-establishes connection automatically without re-pairing!
 
 ---
 
